@@ -1,0 +1,11 @@
+Compiler.c
+CompilerDefines.h
+lexer.c
+lexer.l
+parser.c
+parser.h
+parser.y
+ASTGeneration.c
+ASTGeneration.h
+SemanticAnalysis.c
+CodeGeneration.c
