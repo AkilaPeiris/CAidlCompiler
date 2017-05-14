@@ -1,2 +1,7 @@
 *.creator
 *.creator.user
+*.includes
+*.files
+*.config
+*.out
+*.aidl
