@@ -82,10 +82,11 @@ param_list  : param_list COMMA param {$$ = CreateLinkedList($1, $3);}
 
 #include <stdlib.h>
 #include "CompilerDefines.h"
+#include "CodeGeneration.h"
+#include "SemanticAnalysis.h"
 
 extern int iError;
 extern void CheckForDuplicates(TreeNode* pNode);
-extern void GenerateCode(TreeNode* pPackage, TreeNode* pImports, TreeNode* pInterface);
 
 int Parse(const char* zFileName)
 {
@@ -126,7 +127,12 @@ int main(int argc, char *argv[])
     CheckForDuplicates(gp_ImportList);
     CheckForDuplicates(gp_InterfaceDecl);
 
-    GenerateCode(gp_package, gp_ImportList, gp_InterfaceDecl);
+
+    PackageIncludes* pPackageIncludes           = ProcessPackageIncludes(gp_ImportList);
+    InterfaceDefinition* pInterfaceDefinition   = ProcessInterfaceDefinition(gp_InterfaceDecl, pPackageIncludes);
+    PackageDefinition* pPackageDefinition       = ProcessPackageDefinition(gp_package);
+
+    GenerateCode(pPackageDefinition, pPackageIncludes, pInterfaceDefinition);
 
     return 0;
 }

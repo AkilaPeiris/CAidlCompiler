@@ -1,5 +1,7 @@
 #pragma once
 
+#define MAX_NAME_LENGTH     64
+
 typedef enum
 {
     ParameterAttributeIN = 0,
@@ -31,6 +33,16 @@ typedef enum
 }
 VariableType;
 
+typedef enum
+{
+    IncludeTypeStdString = 0,
+    NoOfIncludeTypes
+}
+IncludeType;
+
+static const char* CDATA_TYPES[] = {"int", "std::string", "float", "double", "char", "void"};
+static const char* INCLUDE_FILES[] = {"string"};
+
 typedef struct tree_node
 {
     DeclarationType eType;
@@ -61,3 +73,26 @@ typedef struct tree_node
     Values;
 }
 TreeNode;
+
+typedef struct package_includes
+{
+    TreeNode*   pTreeNode;
+    int         bNoOfIncludeTypes[NoOfIncludeTypes];
+}
+PackageIncludes;
+
+typedef struct package_definition
+{
+    TreeNode* pTreeNode;
+}
+PackageDefinition;
+
+typedef struct interface_definition
+{
+    TreeNode*   pTreeNode;
+    char        zClassName[MAX_NAME_LENGTH];
+    char        zInterfaceName[MAX_NAME_LENGTH];
+}
+InterfaceDefinition;
+
+

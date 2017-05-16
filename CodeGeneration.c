@@ -6,55 +6,54 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "CodeGeneration.h"
 #include "CompilerDefines.h"
 
 #define PRINT_TAB(n)        fprintf(fp, "%*c", 4 * n, ' ')
 
-FILE* fp;
-
-const char* MapDataType(VariableType eType)
+void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageIncludes* pIncludes)
 {
-    switch (eType)
-    {
-        case VariableTypeInt:       return "int";
-        case VariableTypeString:    return "std::string";
-        case VariableTypeFloat:     return "float";
-        case VariableTypeDouble:    return "double";
-        case VariableTypeChar:      return "char";
-        case VariableTypeVoid:      return "void";
-        default: return "###";
-    }
-}
+    char zFilename[32];
 
-void GenerateInterfaceHeader(TreeNode* pPackage, TreeNode* pImports, TreeNode* pInterface)
-{
-    char zClassName[64];
-    char zConcreteName[64];
+    memset(zFilename, '\0', 32);
 
-    memset(zConcreteName, '\0', 64);
+    snprintf(zFilename, 32, "%s.h", pInterfaceDefinition->zClassName);
 
-    if(pInterface->Values.zName[0] == 'I')
+    FILE* fp = fopen(zFilename, "wr");
+
+    if(fp == NULL)
     {
-        strcpy(zClassName, pInterface->Values.zName);
-        memcpy(zConcreteName, pInterface->Values.zName + sizeof(char), strlen(pInterface->Values.zName) - sizeof(char));
+        printf("Unable to open file");
+
+        return;
     }
-    else
-    {
-        strcpy(zConcreteName, pInterface->Values.zName);
-        snprintf(zClassName, 64, "I%s", pInterface->Values.zName);
-    }
+
+    int i = 0;
+
+    TreeNode* pInterface = pInterfaceDefinition->pTreeNode;
 
     fprintf(fp, "#pragma once\n\n");
+
     fprintf(fp, "#include <binder/IInterface.h>\n");
-    fprintf(fp, "#include <binder/IBinder.h>\n\n");
-    fprintf(fp, "class %s : public android::IInterface \n", zClassName);
+    fprintf(fp, "#include <binder/IBinder.h>\n");
+    fprintf(fp, "\n");
+
+    for(i = 0; i < NoOfIncludeTypes; i++)
+    {
+        if(pIncludes->bNoOfIncludeTypes[i])
+        {
+            fprintf(fp, "#include <%s>\n", INCLUDE_FILES[i]);
+        }
+    }
+
+    fprintf(fp, "\n");
+
+    fprintf(fp, "class %s : public android::IInterface \n", pInterfaceDefinition->zClassName);
     fprintf(fp, "{\n");
-    PRINT_TAB(1);
-    fprintf(fp, "public:\n");
-    PRINT_TAB(2);
-    fprintf(fp, "enum\n");
-    PRINT_TAB(2);
-    fprintf(fp, "{\n");
+
+    PRINT_TAB(1); fprintf(fp, "public:\n");
+    PRINT_TAB(2); fprintf(fp, "enum\n");
+    PRINT_TAB(2); fprintf(fp, "{\n");
 
     TreeNode* p = pInterface->pSibling;
 
@@ -62,7 +61,7 @@ void GenerateInterfaceHeader(TreeNode* pPackage, TreeNode* pImports, TreeNode* p
     {
         PRINT_TAB(3);
 
-        fprintf(fp, "INT_%s = android::IBinder::FIRST_CALL_TRANSACTION", p->Values.zName);
+        fprintf(fp, "TX_CODE_%s = android::IBinder::FIRST_CALL_TRANSACTION", p->Values.zName);
 
         p = p->pSibling;
 
@@ -70,17 +69,15 @@ void GenerateInterfaceHeader(TreeNode* pPackage, TreeNode* pImports, TreeNode* p
         {
             fprintf(fp, ",\n");
 
-            PRINT_TAB(3);
-
-            fprintf(fp, "INT_%s", p->Values.zName);
+            PRINT_TAB(3); fprintf(fp, "TX_CODE_%s", p->Values.zName);
 
             p = p->pSibling;
         }
     }
 
     fprintf(fp, "\n");
-    PRINT_TAB(2);
-    fprintf(fp, "};\n\n");
+
+    PRINT_TAB(2); fprintf(fp, "};\n\n");
 
     p = pInterface->pSibling;
 
@@ -107,7 +104,7 @@ void GenerateInterfaceHeader(TreeNode* pPackage, TreeNode* pImports, TreeNode* p
 
                 b = 0;
 
-                fprintf(fp, "%s %s", MapDataType(pVar->Values.Variable.pTypeSpec->Values.eVariableType), t->Values.Variable.zName);
+                fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
             }
 
             t = t->pSibling;
@@ -119,24 +116,47 @@ void GenerateInterfaceHeader(TreeNode* pPackage, TreeNode* pImports, TreeNode* p
     }
 
     fprintf(fp, "\n");
-    PRINT_TAB(2);
-    fprintf(fp, "DECLARE_META_INTERFACE(%s);\n", zConcreteName);
+
+    PRINT_TAB(2); fprintf(fp, "DECLARE_META_INTERFACE(%s);\n", pInterfaceDefinition->zInterfaceName);
 
     fprintf(fp, "}");
+
+    fclose (fp);
+    fp = NULL;
 }
 
-void GenerateCode(TreeNode* pPackage, TreeNode* pImports, TreeNode* pInterface)
+void GenerateInterfaceBody(PackageIncludes* pPackageIncludes, InterfaceDefinition* pInterfaceDefinition, PackageDefinition* pPackageDefinition)
 {
-    fp = fopen("Gen.cpp", "wr");
+    char zFilename[32];
+
+    memset(zFilename, '\0', 32);
+
+    snprintf(zFilename, 32, "%s.cpp", pInterfaceDefinition->zClassName);
+
+    FILE* fp = fopen(zFilename, "wr");
 
     if(fp == NULL)
     {
         printf("Unable to open file");
+
+        return;
     }
 
-    GenerateInterfaceHeader(pPackage, pImports, pInterface);
+    fprintf(fp, "#include \"%s.h\"\n", pInterfaceDefinition->zClassName);
+    fprintf(fp, "#include \"Bp%s.h\"\n", pInterfaceDefinition->zInterfaceName);
 
+    fprintf(fp, "\n");
 
+    fprintf(fp, "IMPLEMENT_META_INTERFACE(%s, %s.I%s)", pInterfaceDefinition->zInterfaceName, pPackageDefinition->pTreeNode->Values.zName, pInterfaceDefinition->zInterfaceName);
     fclose (fp);
     fp = NULL;
+
+}
+
+void GenerateCode(PackageDefinition* pPackageDefinition, PackageIncludes* pPackageIncludes, InterfaceDefinition* pInterfaceDefinition)
+{
+
+    GenerateInterfaceHeader(pInterfaceDefinition, pPackageIncludes);
+    GenerateInterfaceBody(pPackageIncludes, pInterfaceDefinition, pPackageDefinition);
+
 }
