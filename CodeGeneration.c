@@ -311,7 +311,6 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
 
         PRINT_TAB(1); fprintf(fp, "pData.writeInterfaceToken(I%s::getInterfaceDescriptor());\n\n", pInterfaceDefinition->zInterfaceName);
 
-
         t = p->Values.FunctionArgs.pArguments;
 
         while(t)
@@ -328,7 +327,10 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
             t = t->pSibling;
         }
 
-        fprintf(fp, "\n");
+        if(t != p->Values.FunctionArgs.pArguments)
+        {
+            fprintf(fp, "\n");
+        }
 
         PRINT_TAB(1); fprintf(fp, "remote()->transact(TX_CODE_%s, pData, &pReply);\n\n", p->Values.FunctionArgs.zName);
 
