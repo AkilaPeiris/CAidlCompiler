@@ -8,6 +8,7 @@
 
 #include "CodeGeneration.h"
 #include "CompilerDefines.h"
+#include "ParcelUtilities.h"
 
 #define PRINT_TAB(n)        fprintf(fp, "%*c", 4 * n, ' ')
 
@@ -85,7 +86,7 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
     {
         PRINT_TAB(2);
 
-        fprintf(fp, "virtual %s %s(", "int", p->Values.FunctionArgs.zName);
+        fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
 
@@ -119,7 +120,7 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
 
     PRINT_TAB(2); fprintf(fp, "DECLARE_META_INTERFACE(%s);\n", pInterfaceDefinition->zInterfaceName);
 
-    fprintf(fp, "}");
+    fprintf(fp, "};");
 
     fclose (fp);
     fp = NULL;
@@ -148,15 +149,217 @@ void GenerateInterfaceBody(PackageIncludes* pPackageIncludes, InterfaceDefinitio
     fprintf(fp, "\n");
 
     fprintf(fp, "IMPLEMENT_META_INTERFACE(%s, %s.I%s)", pInterfaceDefinition->zInterfaceName, pPackageDefinition->pTreeNode->Values.zName, pInterfaceDefinition->zInterfaceName);
+
     fclose (fp);
     fp = NULL;
+}
 
+void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
+{
+    char zFilename[32];
+
+    memset(zFilename, '\0', 32);
+
+    snprintf(zFilename, 32, "Bp%s.h", pInterfaceDefinition->zInterfaceName);
+
+    FILE* fp = fopen(zFilename, "wr");
+
+    if(fp == NULL)
+    {
+        printf("Unable to open file");
+
+        return;
+    }
+
+    fprintf(fp, "#include <binder/IInterface.h>\n");
+    fprintf(fp, "#include <binder/IBinder.h>\n");
+    fprintf(fp, "#include <binder/Parcel.h>\n");
+    fprintf(fp, "\n");
+
+    fprintf(fp, "#include \"%s.h\"\n", pInterfaceDefinition->zClassName);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "/*! This class acts as the client side proxy for Bp%s\n", pInterfaceDefinition->zInterfaceName);
+    fprintf(fp, "*/\n");
+    fprintf(fp, "class Bp%s : public android::BpInterface<%s> \n", pInterfaceDefinition->zInterfaceName, pInterfaceDefinition->zClassName);
+    fprintf(fp, "{\n");
+
+    PRINT_TAB(1); fprintf(fp, "public:\n");
+    PRINT_TAB(2); fprintf(fp, "/*! Creates an intance of the Bp%s class\n", pInterfaceDefinition->zInterfaceName);
+    PRINT_TAB(2); fprintf(fp, "*/\n");
+
+    PRINT_TAB(2); fprintf(fp, "explicit Bp%s(const android sp::<android::IBinder>& impl);\n", pInterfaceDefinition->zInterfaceName);
+    PRINT_TAB(2); fprintf(fp, "*/\n");
+
+    PRINT_TAB(2); fprintf(fp, "/*! Destroys an instance of the Bp%s class\n", pInterfaceDefinition->zInterfaceName);
+    PRINT_TAB(2); fprintf(fp, "*/\n");
+    PRINT_TAB(2); fprintf(fp, "virtual ~Bp%s();\n\n", pInterfaceDefinition->zInterfaceName);
+
+    TreeNode* p = pInterfaceDefinition->pTreeNode->pSibling;
+
+    while(p)
+    {
+        PRINT_TAB(2); fprintf(fp, "/*! Declaration for client side proxy for the '%s' function \n", p->Values.FunctionArgs.zName);
+        PRINT_TAB(2); fprintf(fp, "*/\n");
+        PRINT_TAB(2); fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
+
+        TreeNode* t = p->Values.FunctionArgs.pArguments;
+
+        int b = 1;
+
+        while(t)
+        {
+            if(t->eType == VariableDeclaration)
+            {
+                TreeNode* pVar = t;
+
+                if(!b)
+                {
+                    fprintf(fp, ", ");
+                }
+
+                b = 0;
+
+                fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+            }
+
+            t = t->pSibling;
+        }
+
+        fprintf(fp, ");\n\n");
+
+        p = p->pSibling;
+    }
+
+    fprintf(fp, "};");
+
+    fclose (fp);
+    fp = NULL;
+}
+
+
+void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceDefinition* pInterfaceDefinition, PackageDefinition* pPackageDefinition)
+{
+    char zFilename[32];
+
+    memset(zFilename, '\0', 32);
+
+    snprintf(zFilename, 32, "Bp%s.cpp", pInterfaceDefinition->zInterfaceName);
+
+    FILE* fp = fopen(zFilename, "wr");
+
+    if(fp == NULL)
+    {
+        printf("Unable to open file");
+
+        return;
+    }
+
+    fprintf(fp, "#include \"Bp%s.h\"\n", pInterfaceDefinition->zInterfaceName);
+    fprintf(fp, "\n");
+
+    fprintf(fp, "Bp%s::Bp%s(const sp<IBinder>& impl):\n", pInterfaceDefinition->zInterfaceName, pInterfaceDefinition->zInterfaceName);
+    fprintf(fp, "  BpInterface<IScanner>(impl)\n");
+    fprintf(fp, "{\n");
+    fprintf(fp, "\n");
+    fprintf(fp, "}\n");
+
+    fprintf(fp, "\n");
+
+    fprintf(fp, "Bp%s::~Bp%s()\n", pInterfaceDefinition->zInterfaceName, pInterfaceDefinition->zInterfaceName);
+    fprintf(fp, "{\n");
+    fprintf(fp, "\n");
+    fprintf(fp, "}\n");
+
+    fprintf(fp, "\n");
+
+
+    TreeNode* p = pInterfaceDefinition->pTreeNode->pSibling;
+
+    while(p)
+    {
+        fprintf(fp, "%s Bp%s::%s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], pInterfaceDefinition->zInterfaceName, p->Values.FunctionArgs.zName);
+
+        TreeNode* t = p->Values.FunctionArgs.pArguments;
+
+        int b = 1;
+
+        while(t)
+        {
+            if(t->eType == VariableDeclaration)
+            {
+                TreeNode* pVar = t;
+
+                if(!b)
+                {
+                    fprintf(fp, ", ");
+                }
+
+                b = 0;
+
+                fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+            }
+
+            t = t->pSibling;
+        }
+
+        fprintf(fp, ")\n");
+
+        fprintf(fp, "{\n");
+
+        PRINT_TAB(1); fprintf(fp, "Parcel pData, pReply;\n\n");
+
+        PRINT_TAB(1); fprintf(fp, "pData.writeInterfaceToken(I%s::getInterfaceDescriptor());\n\n", pInterfaceDefinition->zInterfaceName);
+
+
+        t = p->Values.FunctionArgs.pArguments;
+
+        while(t)
+        {
+            if(t->eType == VariableDeclaration)
+            {
+                TreeNode* pVar = t;
+
+                PRINT_TAB(1); ParcelWrite(fp, pVar->Values.Variable.pTypeSpec->Values.eVariableType, t->Values.Variable.zName, "pData");
+
+                fprintf(fp, "\n");
+            }
+
+            t = t->pSibling;
+        }
+
+        fprintf(fp, "\n");
+
+        PRINT_TAB(1); fprintf(fp, "remote()->transact(TX_CODE_%s, pData, &pReply);\n\n", p->Values.FunctionArgs.zName);
+
+        PRINT_TAB(1); fprintf(fp, "pReply.readInt32();\n");
+
+
+        if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+        {
+            fprintf(fp, "\n");
+
+            PRINT_TAB(1); fprintf(fp, "return ");
+
+            ParcelRead(fp, p->Values.FunctionArgs.pTypeSpec->Values.eVariableType, "pReply");
+
+            fprintf(fp, "\n");
+        }
+
+        fprintf(fp, "}\n\n");
+
+        p = p->pSibling;
+    }
+
+    fclose (fp);
+    fp = NULL;
 }
 
 void GenerateCode(PackageDefinition* pPackageDefinition, PackageIncludes* pPackageIncludes, InterfaceDefinition* pInterfaceDefinition)
 {
-
     GenerateInterfaceHeader(pInterfaceDefinition, pPackageIncludes);
     GenerateInterfaceBody(pPackageIncludes, pInterfaceDefinition, pPackageDefinition);
 
+    GenerateBinderClientProxyHeader(pInterfaceDefinition);
+    GenerateBinderClientProxyBody(pPackageIncludes, pInterfaceDefinition, pPackageDefinition);
 }

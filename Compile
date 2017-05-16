@@ -1,5 +1,5 @@
 flex -o lexer.c lexer.l
 bison --debug -Wconflicts-sr -d -o parser.c parser.y
-gcc -g -o Orion parser.c lexer.c Compiler.c ASTGeneration.c SemanticAnalysis.c CodeGeneration.c
+gcc -g -o Orion parser.c lexer.c Compiler.c ASTGeneration.c SemanticAnalysis.c CodeGeneration.c ParcelUtilities.c
 
 
