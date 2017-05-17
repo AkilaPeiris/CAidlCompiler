@@ -31,6 +31,34 @@ void ParcelRead(FILE* fp, VariableType eVariableType, const char* sParcelName, i
             }
         }
         break;
+
+        case VariableTypeFloat:
+        {
+            if(bPointer)
+            {
+                fprintf(fp, "%s->readFloat();", sParcelName);
+            }
+            else
+            {
+                fprintf(fp, "%s.readFloat();", sParcelName);
+            }
+        }
+        break;
+
+
+        case VariableTypeDouble:
+        {
+            if(bPointer)
+            {
+                fprintf(fp, "%s->readDouble();", sParcelName);
+            }
+            else
+            {
+                fprintf(fp, "%s.readDouble();", sParcelName);
+            }
+        }
+        break;
+
     }
 }
 
@@ -65,6 +93,33 @@ void ParcelWrite(FILE* fp, VariableType eVariableType, const char* sVarName, con
             }
         }
         break;
+
+        case VariableTypeFloat:
+        {
+            if(bPointer)
+            {
+                fprintf(fp, "%s->writeFloat(%s);", sParcelName, sVarName);
+            }
+            else
+            {
+                fprintf(fp, "%s.writeFloat(%s);", sParcelName, sVarName);
+            }
+        }
+        break;
+
+        case VariableTypeDouble:
+        {
+            if(bPointer)
+            {
+                fprintf(fp, "%s->writeDouble(%s);", sParcelName, sVarName);
+            }
+            else
+            {
+                fprintf(fp, "%s.writeDouble(%s);", sParcelName, sVarName);
+            }
+        }
+        break;
+
     }
 
 }
