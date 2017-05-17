@@ -117,8 +117,11 @@ InterfaceDefinition* ProcessInterfaceDefinition(TreeNode* pNode, PackageIncludes
             switch (pVar->Values.Variable.pTypeSpec->Values.eVariableType)
             {
                 case VariableTypeString:
-                    pIncludes->bNoOfIncludeTypes[IncludeTypeStdString] = 1;
-                    break;
+                {
+                    pIncludes->bCPPIncludeTypes[CPPIncludeTypeStdString] = 1;
+                    pIncludes->bAndroidIncludeTypes[AndroidIncludeTypeString16] = 1;
+                }
+                break;
 
                 default:
                     break;

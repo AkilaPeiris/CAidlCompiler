@@ -35,13 +35,21 @@ VariableType;
 
 typedef enum
 {
-    IncludeTypeStdString = 0,
-    NoOfIncludeTypes
+    AndroidIncludeTypeString16 = 0,
+    NoOfAndroidIncludeTypes
 }
-IncludeType;
+AndroidIncludeType;
+
+typedef enum
+{
+    CPPIncludeTypeStdString = 0,
+    NoOfCPPIncludeTypes
+}
+CPPIncludeType;
 
 static const char* CDATA_TYPES[] = {"int", "std::string", "float", "double", "char", "void"};
-static const char* INCLUDE_FILES[] = {"string"};
+static const char* CPP_INCLUDE_FILES[] = {"string"};
+static const char* ANDROID_INCLUDE_FILES[] = {"utils/String8.h"};
 
 typedef struct tree_node
 {
@@ -77,7 +85,8 @@ TreeNode;
 typedef struct package_includes
 {
     TreeNode*   pTreeNode;
-    int         bNoOfIncludeTypes[NoOfIncludeTypes];
+    int         bCPPIncludeTypes[NoOfCPPIncludeTypes];
+    int         bAndroidIncludeTypes[NoOfCPPIncludeTypes];
 }
 PackageIncludes;
 
