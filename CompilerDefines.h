@@ -17,8 +17,8 @@ typedef enum
     InterfaceDeclaration,
     ImportDeclaration,
     FunctionDeclaration,
-    VariableDeclaration
-
+    VariableDeclaration,
+    StrongBinderDecl
 }
 DeclarationType;
 
@@ -101,7 +101,15 @@ typedef struct interface_definition
     TreeNode*   pTreeNode;
     char        zClassName[MAX_NAME_LENGTH];
     char        zInterfaceName[MAX_NAME_LENGTH];
+    char        zCompleteName[MAX_NAME_LENGTH];
 }
 InterfaceDefinition;
 
+typedef struct _aidl_
+{
+    PackageIncludes* pPackageIncludes;
+    InterfaceDefinition* pInterfaceDefinition;
+    PackageDefinition* pPackageDefinition;
+}
+AIDL;
 

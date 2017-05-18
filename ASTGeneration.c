@@ -91,3 +91,13 @@ TreeNode* CreateParameter(TreeNode* pTypeSpec, char* zName, ParameterAttribute e
 
     return t;
 }
+
+TreeNode* CreateStrongBinderDecl(char* zName)
+{
+    TreeNode * t = (TreeNode *) calloc(1, sizeof(TreeNode));
+
+    t->eType        = StrongBinderDecl;
+    t->Values.zName = zName;
+
+    return t;
+}

@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "HashTable.h"
 #include "CompilerDefines.h"
 
 typedef void (*FnPreProc) (TreeNode *);
+
+HashMap* pFn = NULL;
 
 int iError = 0;
 
@@ -23,16 +26,32 @@ static void TraverseAST(TreeNode * t, FnPreProc fnPreProc)
 }
 
 static void CheckFunctionDeclaration(TreeNode * t)
-{
+{   
+    if(GetSymbol(t->Values.FunctionArgs.zName, pFn))
+    {
+        printf("Duplicate Function declaration '%s'\n", t->Values.FunctionArgs.zName);
+
+        exit(1);
+    }
+
+    InsertSymbol(t->Values.FunctionArgs.zName, t, pFn);
+
     TreeNode* p = t->Values.FunctionArgs.pArguments;
 
     while(p)
     {
-        if(p->eType == VariableDeclaration)
-        {
-            TreeNode* pVar = p;
+        TreeNode* pVar = p->pSibling;
 
-//            printf("Variable Type %d Variable Name %s\n", pVar->Values.Variable.pTypeSpec->Values.eVariableType, p->Values.Variable.zName);
+        while(pVar)
+        {
+            if(strcmp(p->Values.Variable.zName, pVar->Values.Variable.zName) == 0)
+            {
+                printf("Duplicate function variable (%s) in function '%s'\n", pVar->Values.Variable.zName, t->Values.zName);
+
+                exit(1);
+            }
+
+            pVar = pVar->pSibling;
         }
 
         p = p->pSibling;
@@ -41,43 +60,20 @@ static void CheckFunctionDeclaration(TreeNode * t)
 
 static void InsertNode(TreeNode * t)
 {
-    switch (t->eType)
+    if(t->eType == FunctionDeclaration)
     {
-        case PackageDeclaration:
-        {
-//            printf("Package Decl %s\n", t->Values.zName);
-        }
-        break;
-
-        case InterfaceDeclaration:
-        {
-//            printf("Interface Decl %s\n", t->Values.zName);
-        }
-        break;
-
-        case ImportDeclaration:
-        {
-//            printf("Import Decl %s\n", t->Values.zName);
-        }
-        break;
-
-        case FunctionDeclaration:
-        {
-            CheckFunctionDeclaration(t);
-        }
-        break;
-
-        default:
-        {
-//            printf("iterating dummy %d\n", t->eType);
-        }
-        break;
+        CheckFunctionDeclaration(t);
     }
 }
 
-void CheckForDuplicates(TreeNode* pNode)
+void ValidateAST(TreeNode* pNode)
 {
+    pFn = calloc(1, sizeof(HashMap));
+
     TraverseAST(pNode, InsertNode);
+
+    free(pFn);
+    pFn = NULL;
 }
 
 PackageIncludes* ProcessPackageIncludes(TreeNode* pNode)
@@ -89,7 +85,7 @@ PackageIncludes* ProcessPackageIncludes(TreeNode* pNode)
     return t;
 }
 
-InterfaceDefinition* ProcessInterfaceDefinition(TreeNode* pNode, PackageIncludes* pIncludes)
+InterfaceDefinition* ProcessInterfaceDefinition(TreeNode* pNode, PackageIncludes* pIncludes, PackageDefinition* pPackageDef)
 {
     InterfaceDefinition* t = (InterfaceDefinition *) calloc(1, sizeof(InterfaceDefinition));
 
@@ -103,6 +99,8 @@ InterfaceDefinition* ProcessInterfaceDefinition(TreeNode* pNode, PackageIncludes
         strcpy(t->zInterfaceName, pNode->Values.zName);
         snprintf(t->zClassName, MAX_NAME_LENGTH, "I%s", pNode->Values.zName);
     }
+
+    snprintf(t->zCompleteName, MAX_NAME_LENGTH, "%s.%s", pPackageDef->pTreeNode->Values.zName, t->zClassName);
 
     t->pTreeNode = pNode;
 
@@ -141,4 +139,88 @@ PackageDefinition* ProcessPackageDefinition(TreeNode* pNode)
     t->pTreeNode = pNode;
 
     return t;
+}
+
+int CheckImports(HashMap* pPackages, AIDL** p, int iSize)
+{
+    int j = 0;
+
+    for(j = 0; j < iSize; j++)
+    {
+        TreeNode* pT = p[j]->pPackageIncludes->pTreeNode;
+
+        while(pT)
+        {
+            if(GetSymbol(pT->Values.zName, pPackages) == NULL)
+            {
+                printf("Import '%s' not present\n", pT->Values.zName);
+
+                return 0;
+            }
+
+            pT = pT->pSibling;
+        }
+    }
+
+    return 1;
+}
+
+int CheckVariableTypes(HashMap* pPackages, AIDL** pAidl, int iSize)
+{
+    int j = 0;
+
+    for(j = 0; j < iSize; j++)
+    {
+        TreeNode* pT = pAidl[j]->pInterfaceDefinition->pTreeNode->pSibling;
+
+        while(pT)
+        {
+            TreeNode* pArg = pT->Values.FunctionArgs.pArguments;
+
+            while(pArg)
+            {
+                if(pArg->Values.Variable.pTypeSpec->eType == StrongBinderDecl)
+                {
+                    AIDL* pIncludeAidl = GetSymbol(pArg->Values.Variable.pTypeSpec->Values.zName, pPackages);
+
+                    if(!pIncludeAidl)
+                    {
+                        printf("Symbol '%s' not found\n", pArg->Values.Variable.pTypeSpec->Values.zName);
+
+                        return 0;
+                    }
+                    else
+                    {
+                        int iFound = 0;
+
+                        TreeNode* pIncludes = pAidl[j]->pPackageIncludes->pTreeNode;
+
+                        while(pIncludes)
+                        {
+                            if(strcmp(pIncludes->Values.zName, pIncludeAidl->pInterfaceDefinition->zCompleteName) == 0)
+                            {
+                                iFound = 1;
+                                break;
+                            }
+
+                            pIncludes = pIncludes->pSibling;
+                        }
+
+                        if(iFound == 0)
+                        {
+                            printf("Includes for %s not found\n", pArg->Values.Variable.pTypeSpec->Values.zName);
+
+                            return 0;
+                        }
+                    }
+                }
+
+                pArg = pArg->pSibling;
+            }
+
+            pT = pT->pSibling;
+        }
+    }
+
+    return 1;
 }

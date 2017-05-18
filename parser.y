@@ -10,15 +10,15 @@
 
     extern int yylex();
 
+    extern FILE *yyin;
+
     void yyerror(const char* const message);
 
     void* pAST = 0;
 
-    extern FILE *yyin;
-
-    TreeNode* gp_package = 0;
-    TreeNode* gp_ImportList = 0;
-    TreeNode* gp_InterfaceDecl = 0;
+    extern TreeNode* gp_package;
+    extern TreeNode* gp_ImportList;
+    extern TreeNode* gp_InterfaceDecl;
 %}
 
 %error-verbose
@@ -60,7 +60,8 @@ type_spec   : INT {$$ = CreateVariableDecl(VariableTypeInt);}
             | STRING {$$ = CreateVariableDecl(VariableTypeString);}
             | FLOAT {$$ = CreateVariableDecl(VariableTypeFloat);}
             | DOUBLE {$$ = CreateVariableDecl(VariableTypeDouble);}
-            | CHAR {$$ = CreateVariableDecl(VariableTypeChar);};
+            | CHAR {$$ = CreateVariableDecl(VariableTypeChar);}
+            | ID {$$ = CreateStrongBinderDecl($1);};
 
 params      : param_list {$$ = $1;}
             | VOID {$$ = 0;}
@@ -81,12 +82,8 @@ param_list  : param_list COMMA param {$$ = CreateLinkedList($1, $3);}
 %%
 
 #include <stdlib.h>
-#include "CompilerDefines.h"
-#include "CodeGeneration.h"
-#include "SemanticAnalysis.h"
 
 extern int iError;
-extern void CheckForDuplicates(TreeNode* pNode);
 
 int Parse(const char* zFileName)
 {
@@ -114,26 +111,3 @@ void yyerror(const char* const message)
     fprintf(stderr, "Parse error:%s line:%d\n", message, yylineno);
     exit(1);
 }
-
-int main(int argc, char *argv[])
-{
-    if(!Parse(argv[1]))
-    {
-        printf("Unable to open file\n");
-        return 0;
-    }
-
-    CheckForDuplicates(gp_package);
-    CheckForDuplicates(gp_ImportList);
-    CheckForDuplicates(gp_InterfaceDecl);
-
-
-    PackageIncludes* pPackageIncludes           = ProcessPackageIncludes(gp_ImportList);
-    InterfaceDefinition* pInterfaceDefinition   = ProcessInterfaceDefinition(gp_InterfaceDecl, pPackageIncludes);
-    PackageDefinition* pPackageDefinition       = ProcessPackageDefinition(gp_package);
-
-    GenerateCode(pPackageDefinition, pPackageIncludes, pInterfaceDefinition);
-
-    return 0;
-}
-

@@ -18,7 +18,7 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
 
     memset(zFilename, '\0', 32);
 
-    snprintf(zFilename, 32, "%s.h", pInterfaceDefinition->zClassName);
+    snprintf(zFilename, 32, "gen/%s.h", pInterfaceDefinition->zClassName);
 
     FILE* fp = fopen(zFilename, "wr");
 
@@ -86,7 +86,11 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
     {
         PRINT_TAB(2);
 
-        fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
+        printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX %d\n", p->Values.FunctionArgs.pTypeSpec->eType);
+        if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+        {
+            fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
+        }
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
 
@@ -105,7 +109,10 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
 
                 b = 0;
 
-                fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+                if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+                {
+                    fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+                }
             }
 
             t = t->pSibling;
@@ -132,7 +139,7 @@ void GenerateInterfaceBody(PackageIncludes* pPackageIncludes, InterfaceDefinitio
 
     memset(zFilename, '\0', 32);
 
-    snprintf(zFilename, 32, "%s.cpp", pInterfaceDefinition->zClassName);
+    snprintf(zFilename, 32, "gen/%s.cpp", pInterfaceDefinition->zClassName);
 
     FILE* fp = fopen(zFilename, "wr");
 
@@ -160,7 +167,7 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
 
     memset(zFilename, '\0', 32);
 
-    snprintf(zFilename, 32, "Bp%s.h", pInterfaceDefinition->zInterfaceName);
+    snprintf(zFilename, 32, "gen/Bp%s.h", pInterfaceDefinition->zInterfaceName);
 
     FILE* fp = fopen(zFilename, "wr");
 
@@ -203,7 +210,11 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
     {
         PRINT_TAB(2); fprintf(fp, "/*! Declaration for client side proxy for the '%s' function \n", p->Values.FunctionArgs.zName);
         PRINT_TAB(2); fprintf(fp, "*/\n");
-        PRINT_TAB(2); fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
+
+        if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+        {
+            PRINT_TAB(2); fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
+        }
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
 
@@ -222,7 +233,10 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
 
                 b = 0;
 
-                fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+                if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+                {
+                    fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+                }
             }
 
             t = t->pSibling;
@@ -246,7 +260,7 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
 
     memset(zFilename, '\0', 32);
 
-    snprintf(zFilename, 32, "Bp%s.cpp", pInterfaceDefinition->zInterfaceName);
+    snprintf(zFilename, 32, "gen/Bp%s.cpp", pInterfaceDefinition->zInterfaceName);
 
     FILE* fp = fopen(zFilename, "wr");
 
@@ -294,7 +308,10 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
 
     while(p)
     {
-        fprintf(fp, "%s Bp%s::%s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], pInterfaceDefinition->zInterfaceName, p->Values.FunctionArgs.zName);
+        if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+        {
+            fprintf(fp, "%s Bp%s::%s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], pInterfaceDefinition->zInterfaceName, p->Values.FunctionArgs.zName);
+        }
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
 
@@ -379,7 +396,7 @@ void GenerateBinderNativeHeader(PackageIncludes* pPackageIncludes, InterfaceDefi
 
     memset(zFilename, '\0', 32);
 
-    snprintf(zFilename, 32, "Bn%s.h", pInterfaceDefinition->zInterfaceName);
+    snprintf(zFilename, 32, "gen/Bn%s.h", pInterfaceDefinition->zInterfaceName);
 
     FILE* fp = fopen(zFilename, "wr");
 
@@ -428,7 +445,7 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
 
     memset(zFilename, '\0', 32);
 
-    snprintf(zFilename, 32, "Bn%s.cpp", pInterfaceDefinition->zInterfaceName);
+    snprintf(zFilename, 32, "gen/Bn%s.cpp", pInterfaceDefinition->zInterfaceName);
 
     FILE* fp = fopen(zFilename, "wr");
 
@@ -475,7 +492,10 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
     fprintf(fp, "{\n");
     PRINT_TAB(1); fprintf(fp, "status_t tStatus = NO_ERROR;\n\n");
 
-    PRINT_TAB(1); fprintf(fp, "pData.checkInterface(this);\n");
+    PRINT_TAB(1); fprintf(fp, "if(pData.checkInterface(this) == false)\n");
+    PRINT_TAB(1); fprintf(fp, "{\n");
+    PRINT_TAB(2); fprintf(fp, "return PERMISSION_DENIED;\n");
+    PRINT_TAB(1); fprintf(fp, "}\n");
     fprintf(fp, "\n");
 
     PRINT_TAB(1); fprintf(fp, "switch(iCode)\n");
