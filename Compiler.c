@@ -70,7 +70,6 @@ int main(int argc, char *argv[])
 
     for(j = 0; j < i - 1; j++)
     {
-        printf("Crash %d\n", j);
         GenerateCode(p[j]->pPackageDefinition, p[j]->pPackageIncludes, p[j]->pInterfaceDefinition);
     }
 

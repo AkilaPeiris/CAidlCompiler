@@ -86,10 +86,13 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
     {
         PRINT_TAB(2);
 
-        printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX %d\n", p->Values.FunctionArgs.pTypeSpec->eType);
         if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
         {
             fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
+        }
+        else
+        {
+            fprintf(fp, "virtual android::sp<%s> %s(", p->Values.FunctionArgs.pTypeSpec->Values.zName, p->Values.FunctionArgs.zName);
         }
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
@@ -98,7 +101,7 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
 
         while(t)
         {
-            if(t->eType == VariableDeclaration)
+            if(t->Values.Variable.pTypeSpec->eType == VariableDeclaration)
             {
                 TreeNode* pVar = t;
 
@@ -109,10 +112,18 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
 
                 b = 0;
 
-                if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+                fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+            }
+            else if(t->Values.Variable.pTypeSpec->eType == StrongBinderDecl)
+            {
+                if(!b)
                 {
-                    fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+                    fprintf(fp, ", ");
                 }
+
+                b = 0;
+
+                fprintf(fp, "android::sp<%s>& %s", t->Values.Variable.pTypeSpec->Values.zName, t->Values.Variable.zName);
             }
 
             t = t->pSibling;
@@ -174,7 +185,6 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
     if(fp == NULL)
     {
         printf("Unable to open file");
-
         return;
     }
 
@@ -215,6 +225,10 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
         {
             PRINT_TAB(2); fprintf(fp, "virtual %s %s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], p->Values.FunctionArgs.zName);
         }
+        else if(p->Values.FunctionArgs.pTypeSpec->eType == StrongBinderDecl)
+        {
+            PRINT_TAB(2); fprintf(fp, "virtual android::sp<%s> %s(", p->Values.FunctionArgs.pTypeSpec->Values.zName, p->Values.FunctionArgs.zName);
+        }
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
 
@@ -233,9 +247,13 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
 
                 b = 0;
 
-                if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+                if(t->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
                 {
                     fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+                }
+                else if(t->Values.Variable.pTypeSpec->eType == StrongBinderDecl)
+                {
+                    fprintf(fp, "android::sp<%s>& %s", pVar->Values.Variable.pTypeSpec->Values.zName, t->Values.Variable.zName);
                 }
             }
 
@@ -247,7 +265,7 @@ void GenerateBinderClientProxyHeader(InterfaceDefinition* pInterfaceDefinition)
         p = p->pSibling;
     }
 
-    fprintf(fp, "};");
+    fprintf(fp, "};\n");
 
     fclose (fp);
     fp = NULL;
@@ -267,7 +285,6 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
     if(fp == NULL)
     {
         printf("Unable to open file");
-
         return;
     }
 
@@ -289,7 +306,7 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
     fprintf(fp, "using namespace android;\n\n");
 
     fprintf(fp, "Bp%s::Bp%s(const sp<IBinder>& impl):\n", pInterfaceDefinition->zInterfaceName, pInterfaceDefinition->zInterfaceName);
-    fprintf(fp, "  BpInterface<IScanner>(impl)\n");
+    fprintf(fp, "  BpInterface<%s>(impl)\n", pInterfaceDefinition->zClassName);
     fprintf(fp, "{\n");
     fprintf(fp, "\n");
     fprintf(fp, "}\n");
@@ -310,7 +327,11 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
     {
         if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
         {
-            fprintf(fp, "%s Bp%s::%s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], pInterfaceDefinition->zInterfaceName, p->Values.FunctionArgs.zName);
+            fprintf(fp, "%s Bp%s::%s(", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType], pInterfaceDefinition->zInterfaceName, p->Values.zName);
+        }
+        else if(p->Values.FunctionArgs.pTypeSpec->eType == StrongBinderDecl)
+        {
+            fprintf(fp, "android::sp<%s> Bp%s::%s(", p->Values.FunctionArgs.pTypeSpec->Values.zName, pInterfaceDefinition->zInterfaceName, p->Values.zName);
         }
 
         TreeNode* t = p->Values.FunctionArgs.pArguments;
@@ -319,7 +340,7 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
 
         while(t)
         {
-            if(t->eType == VariableDeclaration)
+            if(t->Values.Variable.pTypeSpec->eType == VariableDeclaration)
             {
                 TreeNode* pVar = t;
 
@@ -331,6 +352,17 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
                 b = 0;
 
                 fprintf(fp, "%s %s", CDATA_TYPES[pVar->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
+            }
+            else if(t->Values.Variable.pTypeSpec->eType == StrongBinderDecl)
+            {
+                if(!b)
+                {
+                    fprintf(fp, ", ");
+                }
+
+                b = 0;
+
+                fprintf(fp, "android::sp<%s>& %s", t->Values.Variable.pTypeSpec->Values.zName, t->Values.Variable.zName);
             }
 
             t = t->pSibling;
@@ -348,13 +380,17 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
 
         while(t)
         {
-            if(t->eType == VariableDeclaration)
+            if(t->Values.Variable.pTypeSpec->eType == VariableDeclaration)
             {
                 TreeNode* pVar = t;
 
                 PRINT_TAB(1); ParcelWrite(fp, pVar->Values.Variable.pTypeSpec->Values.eVariableType, t->Values.Variable.zName, "pData", 0);
 
                 fprintf(fp, "\n");
+            }
+            else if(t->Values.Variable.pTypeSpec->eType == StrongBinderDecl)
+            {
+                PRINT_TAB(1); fprintf(fp, "pData.writeStrongBinder(IInterface::asBinder(%s));\n", t->Values.Variable.zName);
             }
 
             t = t->pSibling;
@@ -370,13 +406,24 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
         PRINT_TAB(1); fprintf(fp, "pReply.readInt32();\n");
 
 
-        if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+        if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
+        {
+            if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+            {
+                fprintf(fp, "\n");
+
+                PRINT_TAB(1); fprintf(fp, "return ");
+
+                ParcelRead(fp, p->Values.FunctionArgs.pTypeSpec->Values.eVariableType, "pReply", 0);
+
+                fprintf(fp, "\n");
+            }
+        }
+        else if(p->Values.FunctionArgs.pTypeSpec->eType == StrongBinderDecl)
         {
             fprintf(fp, "\n");
 
-            PRINT_TAB(1); fprintf(fp, "return ");
-
-            ParcelRead(fp, p->Values.FunctionArgs.pTypeSpec->Values.eVariableType, "pReply", 0);
+            PRINT_TAB(1); fprintf(fp, "return interface_cast<%s>(pReply.readStrongBinder());", p->Values.FunctionArgs.pTypeSpec->Values.zName);
 
             fprintf(fp, "\n");
         }
@@ -403,7 +450,6 @@ void GenerateBinderNativeHeader(PackageIncludes* pPackageIncludes, InterfaceDefi
     if(fp == NULL)
     {
         printf("Unable to open file");
-
         return;
     }
 
@@ -433,7 +479,7 @@ void GenerateBinderNativeHeader(PackageIncludes* pPackageIncludes, InterfaceDefi
     PRINT_TAB(2); fprintf(fp, "virtual android::status_t onTransact(uint32_t iCode, const android::Parcel& pData,\n%*c android::Parcel* pReply, uint32_t iFlags = 0);\n", 16, ' ');
 
     fprintf(fp, "\n");
-    fprintf(fp, "};");
+    fprintf(fp, "};\n");
 
     fclose (fp);
     fp = NULL;
@@ -452,7 +498,6 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
     if(fp == NULL)
     {
         printf("Unable to open file");
-
         return;
     }
 
@@ -469,7 +514,7 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
     }
 
     fprintf(fp, "\n");
-    fprintf(fp, "#include \"BnScanner.h\"\n");
+    fprintf(fp, "#include \"Bn%s.h\"\n", pInterfaceDefinition->zInterfaceName);
 
     fprintf(fp, "\n");
     fprintf(fp, "using namespace android;\n\n");
@@ -512,12 +557,20 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
 
         while(t)
         {
-            if(t->eType == VariableDeclaration)
+            if(t->Values.Variable.pTypeSpec->eType == VariableDeclaration)
             {
                 TreeNode* pVar = t;
 
                 PRINT_TAB(3); fprintf(fp, "%s user_def_var__%s = ", CDATA_TYPES[t->Values.Variable.pTypeSpec->Values.eVariableType], t->Values.Variable.zName);
                 ParcelRead(fp, pVar->Values.Variable.pTypeSpec->Values.eVariableType, "pData", 0);
+
+                fprintf(fp, "\n");
+            }
+            else if(t->Values.Variable.pTypeSpec->eType == StrongBinderDecl)
+            {
+                PRINT_TAB(3); fprintf(fp, "sp<%s> user_def_var__%s = interface_cast<%s>(pData.readStrongBinder());",
+                                      t->Values.Variable.pTypeSpec->Values.zName, t->Values.Variable.zName,
+                                                                    t->Values.Variable.pTypeSpec->Values.zName);
 
                 fprintf(fp, "\n");
             }
@@ -532,9 +585,16 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
 
         PRINT_TAB(3);
 
-        if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+        if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
         {
-            fprintf(fp, "%s return__val__ = ", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType]);
+            if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+            {
+                fprintf(fp, "%s return__val__ = ", CDATA_TYPES[p->Values.FunctionArgs.pTypeSpec->Values.eVariableType]);
+            }
+        }
+        else if(p->Values.FunctionArgs.pTypeSpec->eType == StrongBinderDecl)
+        {
+            fprintf(fp, "sp<%s> return__val__ = ", p->Values.FunctionArgs.pTypeSpec->Values.zName);
         }
 
         fprintf(fp, "%s(", p->Values.FunctionArgs.zName);
@@ -550,7 +610,8 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
                 fprintf(fp, ", ");
             }
 
-            if(t->eType == VariableDeclaration)
+            if((p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration) |
+                    (p->Values.FunctionArgs.pTypeSpec->eType == StrongBinderDecl))
             {
                 fprintf(fp, "user_def_var__%s", t->Values.Variable.zName);
             }
@@ -565,9 +626,17 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
         PRINT_TAB(2); fprintf(fp, "\n");
         PRINT_TAB(3); fprintf(fp, "pReply->writeInt32(0);\n\n");
 
-        if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+        if(p->Values.FunctionArgs.pTypeSpec->eType == VariableDeclaration)
         {
-            PRINT_TAB(3); ParcelWrite(fp, p->Values.FunctionArgs.pTypeSpec->Values.eVariableType, "return__val__", "pReply", 1);
+            if(p->Values.FunctionArgs.pTypeSpec->Values.eVariableType != VariableTypeVoid)
+            {
+                PRINT_TAB(3); ParcelWrite(fp, p->Values.FunctionArgs.pTypeSpec->Values.eVariableType, "return__val__", "pReply", 1);
+                fprintf(fp, "\n\n");
+            }
+        }
+        else
+        {
+            PRINT_TAB(3); fprintf(fp, "pReply->writeStrongBinder(IInterface::asBinder(return__val__));");
             fprintf(fp, "\n\n");
         }
 
