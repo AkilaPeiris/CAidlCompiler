@@ -1,5 +1,7 @@
 #pragma once
 
+#include "HashTable.h"
+
 #define MAX_NAME_LENGTH     64
 
 typedef enum

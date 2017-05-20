@@ -12,7 +12,7 @@
 
 #define PRINT_TAB(n)        fprintf(fp, "%*c", 4 * n, ' ')
 
-void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageIncludes* pIncludes)
+void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageIncludes* pIncludes, HashMap* pPackages)
 {
     char zFilename[32];
 
@@ -45,6 +45,17 @@ void GenerateInterfaceHeader(InterfaceDefinition* pInterfaceDefinition, PackageI
         {
             fprintf(fp, "#include <%s>\n", CPP_INCLUDE_FILES[i]);
         }
+    }
+
+    TreeNode* pIncludePackages = pIncludes->pTreeNode;
+
+    while(pIncludePackages)
+    {
+        AIDL* pIncludedPackage = GetSymbol(pIncludePackages->Values.zName, pPackages);
+
+        fprintf(fp, "#include \"%s.h\"\n", pIncludedPackage->pInterfaceDefinition->zClassName);
+
+        pIncludePackages = pIncludePackages->pSibling;
     }
 
     fprintf(fp, "\n");
@@ -664,9 +675,9 @@ void GenerateBinderNativeBody(PackageIncludes* pPackageIncludes, InterfaceDefini
 
 }
 
-void GenerateCode(PackageDefinition* pPackageDefinition, PackageIncludes* pPackageIncludes, InterfaceDefinition* pInterfaceDefinition)
+void GenerateCode(PackageDefinition* pPackageDefinition, PackageIncludes* pPackageIncludes, InterfaceDefinition* pInterfaceDefinition, HashMap* pPackages)
 {
-    GenerateInterfaceHeader(pInterfaceDefinition, pPackageIncludes);
+    GenerateInterfaceHeader(pInterfaceDefinition, pPackageIncludes, pPackages);
     GenerateInterfaceBody(pPackageIncludes, pInterfaceDefinition, pPackageDefinition);
 
     GenerateBinderClientProxyHeader(pInterfaceDefinition);

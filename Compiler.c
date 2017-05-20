@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "HashTable.h"
 #include "CompilerDefines.h"
 #include "CodeGeneration.h"
 #include "SemanticAnalysis.h"
@@ -16,6 +15,7 @@ int main(int argc, char *argv[])
 {
     HashMap* pPackages = calloc(1, sizeof(HashMap));
     HashMap* pClasses = calloc(1, sizeof(HashMap));
+
 
     int i = 0, j = 0;
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
     for(j = 0; j < i - 1; j++)
     {
-        GenerateCode(p[j]->pPackageDefinition, p[j]->pPackageIncludes, p[j]->pInterfaceDefinition);
+        GenerateCode(p[j]->pPackageDefinition, p[j]->pPackageIncludes, p[j]->pInterfaceDefinition, pPackages);
     }
 
     return 0;
