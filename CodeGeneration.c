@@ -412,7 +412,14 @@ void GenerateBinderClientProxyBody(PackageIncludes* pPackageIncludes, InterfaceD
             fprintf(fp, "\n");
         }
 
-        PRINT_TAB(1); fprintf(fp, "remote()->transact(TX_CODE_%s, pData, &pReply);\n\n", p->Values.FunctionArgs.zName);
+        if(p->Values.FunctionArgs.bOneWay)
+        {
+            PRINT_TAB(1); fprintf(fp, "remote()->transact(TX_CODE_%s, pData, &pReply, IBinder::FLAG_ONEWAY);\n\n", p->Values.FunctionArgs.zName);
+        }
+        else
+        {
+            PRINT_TAB(1); fprintf(fp, "remote()->transact(TX_CODE_%s, pData, &pReply);\n\n", p->Values.FunctionArgs.zName);
+        }
 
         PRINT_TAB(1); fprintf(fp, "pReply.readInt32();\n");
 

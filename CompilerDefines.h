@@ -68,6 +68,7 @@ typedef struct tree_node
             char* zName;
             struct tree_node* pTypeSpec;
             struct tree_node* pArguments;
+            int bOneWay;
         }
         FunctionArgs;
 

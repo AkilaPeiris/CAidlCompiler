@@ -53,7 +53,8 @@ intfc_decl  : INTERFACE ID LBRACE f_decl_list RBRACE {$$ = CreateInterfaceDecl($
 f_decl_list : f_decl_list fun_decl {$$ = CreateLinkedList($1, $2);}
             | fun_decl {$$ = $1;};
 
-fun_decl    : type_spec ID LPAREN params RPAREN SEMI {$$ = CreateFunctionDecl($1, $2, $4);};
+fun_decl    : type_spec ID LPAREN params RPAREN SEMI {$$ = CreateFunctionDecl($1, $2, $4, 0);}
+            | ONEWAY type_spec ID LPAREN params RPAREN SEMI {$$ = CreateFunctionDecl($2, $3, $5, 1);};
 
 type_spec   : INT {$$ = CreateVariableDecl(VariableTypeInt);}
             | VOID {$$ = CreateVariableDecl(VariableTypeVoid);}

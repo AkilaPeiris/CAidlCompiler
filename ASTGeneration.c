@@ -33,7 +33,7 @@ TreeNode* CreateVariableDecl(VariableType eType)
     return t;
 }
 
-TreeNode* CreateFunctionDecl(TreeNode* pType, char* zName, TreeNode* pArguments)
+TreeNode* CreateFunctionDecl(TreeNode* pType, char* zName, TreeNode* pArguments, int bOneWay)
 {
     TreeNode * t = (TreeNode *) calloc(1, sizeof(TreeNode));
 
@@ -41,6 +41,7 @@ TreeNode* CreateFunctionDecl(TreeNode* pType, char* zName, TreeNode* pArguments)
     t->Values.FunctionArgs.zName        = zName;
     t->Values.FunctionArgs.pArguments   = pArguments;
     t->Values.FunctionArgs.pTypeSpec    = pType;
+    t->Values.FunctionArgs.bOneWay      = bOneWay;
 
     return t;
 }
