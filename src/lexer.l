@@ -39,7 +39,7 @@ LB          ^[ \t]*
 "void"                                              {return VOID;}
 "inout"                                             {return INOUT;}
 "oneway"                                            {return ONEWAY;}
-"package"                                           {return PACKAGE;}
+"package"                                           {return JPACKAGE_DECL;}
 "interface"                                         {return INTERFACE;}
 "import"                                            {return IMPORT;}
 "in"                                                {return IN;}
@@ -54,7 +54,7 @@ LB          ^[ \t]*
 ";"                                                 {return SEMI;}
 "//".*                                              {}                     
 {L}[a-zA-Z0-9_]*                                    {yylval.name = strdup(yytext); return ID;}
-{L}[a-zA-Z0-9_.]*                                   {yylval.name = strdup(yytext); return PACKAGE_NAME;}
+{L}[a-zA-Z0-9_.]*                                   {yylval.name = strdup(yytext); return JPACKAGE_NAME;}
 [/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]                 {}
 
 [\n]                                                {}

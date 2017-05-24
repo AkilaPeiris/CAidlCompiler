@@ -45,7 +45,7 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    PACKAGE = 258,
+    JPACKAGE_DECL = 258,
     IMPORT = 259,
     INTERFACE = 260,
     LBRACE = 261,
@@ -67,7 +67,7 @@ extern int yydebug;
     OUT = 277,
     ONEWAY = 278,
     ID = 279,
-    PACKAGE_NAME = 280
+    JPACKAGE_NAME = 280
   };
 #endif
 

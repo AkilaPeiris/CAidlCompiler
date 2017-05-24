@@ -120,7 +120,7 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    PACKAGE = 258,
+    JPACKAGE_DECL = 258,
     IMPORT = 259,
     INTERFACE = 260,
     LBRACE = 261,
@@ -142,7 +142,7 @@ extern int yydebug;
     OUT = 277,
     ONEWAY = 278,
     ID = 279,
-    PACKAGE_NAME = 280
+    JPACKAGE_NAME = 280
   };
 #endif
 
@@ -484,10 +484,10 @@ static const yytype_uint8 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "PACKAGE", "IMPORT", "INTERFACE",
+  "$end", "error", "$undefined", "JPACKAGE_DECL", "IMPORT", "INTERFACE",
   "LBRACE", "RBRACE", "COMMA", "LBRACK", "RBRACK", "INT", "VOID", "STRING",
   "LPAREN", "RPAREN", "SEMI", "FLOAT", "DOUBLE", "CHAR", "INOUT", "IN",
-  "OUT", "ONEWAY", "ID", "PACKAGE_NAME", "$accept", "program", "pkg",
+  "OUT", "ONEWAY", "ID", "JPACKAGE_NAME", "$accept", "program", "pkg",
   "imprt_list", "imprt", "intfc_decl", "f_decl_list", "fun_decl",
   "type_spec", "params", "param", "param_list", YY_NULLPTR
 };

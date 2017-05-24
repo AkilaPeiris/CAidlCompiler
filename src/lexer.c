@@ -1,6 +1,5 @@
-#line 2 "lexer.c"
 
-#line 4 "lexer.c"
+#line 3 "lexer.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -569,7 +568,7 @@ char *yytext;
     void AppendBufferChar(char* strbuf, char yytext);
     char* BufferData(char* strbuf);
 
-#line 573 "lexer.c"
+#line 572 "lexer.c"
 
 #define INITIAL 0
 #define string 1
@@ -760,7 +759,7 @@ YY_DECL
 #line 32 "lexer.l"
 
 
-#line 764 "lexer.c"
+#line 763 "lexer.c"
 
 	if ( !(yy_init) )
 		{
@@ -896,7 +895,7 @@ YY_RULE_SETUP
 case 9:
 YY_RULE_SETUP
 #line 42 "lexer.l"
-{return PACKAGE;}
+{return JPACKAGE_DECL;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
@@ -971,7 +970,7 @@ YY_RULE_SETUP
 case 24:
 YY_RULE_SETUP
 #line 57 "lexer.l"
-{yylval.name = strdup(yytext); return PACKAGE_NAME;}
+{yylval.name = strdup(yytext); return JPACKAGE_NAME;}
 	YY_BREAK
 case 25:
 /* rule 25 can match eol */
@@ -995,7 +994,7 @@ YY_RULE_SETUP
 #line 63 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 999 "lexer.c"
+#line 998 "lexer.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(string):
 	yyterminate();

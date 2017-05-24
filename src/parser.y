@@ -31,22 +31,22 @@
 }
 
 
-%token PACKAGE IMPORT INTERFACE LBRACE RBRACE COMMA LBRACK RBRACK
+%token JPACKAGE_DECL IMPORT INTERFACE LBRACE RBRACE COMMA LBRACK RBRACK
 %token INT VOID STRING LPAREN RPAREN SEMI FLOAT DOUBLE CHAR INOUT IN OUT ONEWAY
 
-%token<name> ID PACKAGE_NAME
+%token<name> ID JPACKAGE_NAME
 %type<astnode> pkg imprt_list imprt intfc_decl f_decl_list fun_decl type_spec params param param_list
 
 %%
 
 program     : pkg imprt_list intfc_decl {gp_package = $1; gp_ImportList = $2; gp_InterfaceDecl = $3;};
 
-pkg         : PACKAGE PACKAGE_NAME SEMI {$$ = CreatePackageDecl($2);};
+pkg         : JPACKAGE_DECL JPACKAGE_NAME SEMI {$$ = CreatePackageDecl($2);};
 
 imprt_list  : imprt_list imprt {$$ = CreateLinkedList($1, $2);}
             | /*Empty*/ {$$ = 0;};
 
-imprt       : IMPORT PACKAGE_NAME SEMI {$$ = CreateImportDecl($2);};
+imprt       : IMPORT JPACKAGE_NAME SEMI {$$ = CreateImportDecl($2);};
 
 intfc_decl  : INTERFACE ID LBRACE f_decl_list RBRACE {$$ = CreateInterfaceDecl($2, $4);};
 

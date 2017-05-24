@@ -11,11 +11,17 @@ TreeNode* gp_InterfaceDecl = 0;
 
 extern int Parse(const char* zFileName);
 
-int main(int argc, char *argv[])
+void ExitFunction()
 {
+
+}
+
+int main(int argc, char *argv[])
+{    
+    atexit(ExitFunction);
+
     HashMap* pPackages = calloc(1, sizeof(HashMap));
     HashMap* pClasses = calloc(1, sizeof(HashMap));
-
 
     int i = 0, j = 0;
 
