@@ -6,7 +6,8 @@ Compiler to convert aidl files (android interface descriptor language) to C++ co
 Need to have flax and bison installed
 
 Compiling 
-	./Compile
+	./configure
+	./make
 
 Running
 
